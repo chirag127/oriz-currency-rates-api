@@ -1,0 +1,17 @@
+name: distribute
+
+# PWABuilder placeholder — once the Pages site is live and stable, wire this up
+# to call PWABuilder CLI to generate AAB/MSIX/iOS-project artifacts.
+# See: https://docs.pwabuilder.com/
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Note
+        run: |
+          echo "PWABuilder distribute is a placeholder."
+          echo "TODO: install @pwabuilder/cli and package https://currency.api.oriz.in"

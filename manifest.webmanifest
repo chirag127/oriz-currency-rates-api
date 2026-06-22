@@ -1,0 +1,22 @@
+{
+  "name": "Oriz Currency Rates API",
+  "short_name": "Oriz FX",
+  "description": "Daily currency rate snapshots, USD-base, aggregated from 3 free upstreams.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "https://oriz.in/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://oriz.in/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

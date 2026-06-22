@@ -1,0 +1,121 @@
+---
+// Oriz Currency Rates API — landing + playground
+// Plain HTML inside an Astro file; the Pages workflow strips this frontmatter.
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Oriz Currency Rates API</title>
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#0b1020" />
+<style>
+  :root { --bg:#0b1020; --fg:#e6e9f2; --muted:#9aa3b2; --accent:#7cd1ff; --card:#141a2e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); line-height:1.55; }
+  main { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 2rem; margin: 0 0 .25rem; }
+  .lede { color: var(--muted); margin: 0 0 2rem; }
+  .card { background: var(--card); border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1rem 0; }
+  code, pre { background:#0a0f1f; padding:.15rem .4rem; border-radius:4px; font-size:.9em; }
+  pre { padding: .9rem 1.1rem; overflow-x:auto; }
+  a { color: var(--accent); }
+  label { display:block; font-size:.85rem; color:var(--muted); margin-top:.6rem; }
+  input, select { width:100%; padding:.55rem .7rem; border-radius:6px; border:1px solid #2a3148; background:#0a0f1f; color:var(--fg); font-size:1rem; }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap:.75rem; }
+  .out { font-size: 1.4rem; font-weight: 600; margin-top:.75rem; color:var(--accent); }
+  table { width:100%; border-collapse: collapse; font-size:.92rem; }
+  th, td { text-align:left; padding:.35rem .6rem; border-bottom:1px solid #1d2440; }
+  th { color: var(--muted); font-weight: 500; }
+  footer { color: var(--muted); font-size:.85rem; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Oriz Currency Rates API</h1>
+  <p class="lede">Daily USD-base FX snapshots, aggregated as the median across 3 free upstreams. Static JSON, no auth, MIT.</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">Endpoints</h2>
+    <pre>GET /data/latest.json
+GET /data/rates-YYYY-MM-DD.json</pre>
+    <p style="color:var(--muted); font-size:.9rem">Updated daily ~06:30 IST via GitHub Actions.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Converter</h2>
+    <div class="row">
+      <div>
+        <label for="amt">Amount</label>
+        <input id="amt" type="number" value="100" min="0" step="0.01" />
+      </div>
+      <div>
+        <label for="from">From</label>
+        <select id="from"></select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="to">To</label>
+        <select id="to"></select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <div class="out" id="out">—</div>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:.8rem; margin:.75rem 0 0" id="meta">Loading rates…</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Latest rates (per 1 USD)</h2>
+    <table id="rates"><thead><tr><th>Currency</th><th>Rate</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <footer>
+    <p>Aggregates: <a href="https://www.frankfurter.app/">frankfurter.app</a>, <a href="https://exchangerate.host/">exchangerate.host</a>, <a href="https://open.er-api.com/">open.er-api.com</a> (openexchangerates free alternate). Source: <a href="https://github.com/chirag127/oriz-currency-rates-api">github.com/chirag127/oriz-currency-rates-api</a> · MIT.</p>
+  </footer>
+</main>
+
+<script>
+(async () => {
+  const out = document.getElementById("out");
+  const meta = document.getElementById("meta");
+  const fromSel = document.getElementById("from");
+  const toSel = document.getElementById("to");
+  const amt = document.getElementById("amt");
+  const tbody = document.querySelector("#rates tbody");
+  try {
+    const r = await fetch("/data/latest.json", { cache: "no-store" });
+    const j = await r.json();
+    const rates = { USD: 1, ...j.rates };
+    const codes = Object.keys(rates).sort();
+    for (const c of codes) {
+      const o1 = document.createElement("option"); o1.value = c; o1.textContent = c; fromSel.appendChild(o1);
+      const o2 = document.createElement("option"); o2.value = c; o2.textContent = c; toSel.appendChild(o2);
+    }
+    fromSel.value = "USD";
+    toSel.value = rates.INR ? "INR" : codes.find(c => c !== "USD");
+    for (const [k, v] of Object.entries(rates)) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
+      tbody.appendChild(tr);
+    }
+    const sourcesOk = (j.sources || []).filter(s => s.ok).map(s => s.name).join(", ");
+    meta.textContent = `Date: ${j.date} · ${j.count} currencies · sources OK: ${sourcesOk || "fallback"}`;
+    const convert = () => {
+      const a = parseFloat(amt.value) || 0;
+      const f = rates[fromSel.value], t = rates[toSel.value];
+      if (!f || !t) return;
+      out.textContent = (a / f * t).toFixed(4) + " " + toSel.value;
+    };
+    [amt, fromSel, toSel].forEach(el => el.addEventListener("input", convert));
+    convert();
+  } catch (e) {
+    meta.textContent = "Failed to load /data/latest.json: " + e.message;
+  }
+})();
+</script>
+</body>
+</html>

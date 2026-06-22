@@ -1,0 +1,46 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+      - "docs/**"
+      - "manifest.webmanifest"
+      - "CNAME"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r data _site/data || true
+          cp manifest.webmanifest _site/ || true
+          cp CNAME _site/ || true
+          # Render docs/index.astro as plain index.html (no Astro toolchain — strip frontmatter)
+          if [ -f docs/index.astro ]; then
+            awk 'BEGIN{p=0} /^---$/{c++; if(c==2){p=1; next}} p==1' docs/index.astro > _site/index.html
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

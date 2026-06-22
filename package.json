@@ -1,0 +1,16 @@
+{
+  "name": "oriz-currency-rates-api",
+  "version": "0.1.0",
+  "description": "Daily currency rate snapshots aggregating 3 free upstreams (frankfurter.app, exchangerate.host, open.er-api.com).",
+  "type": "module",
+  "license": "MIT",
+  "author": "Chirag Singhal",
+  "homepage": "https://currency.api.oriz.in",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chirag127/oriz-currency-rates-api.git"
+  },
+  "scripts": {
+    "scrape": "node scripts/scrape.mjs"
+  }
+}
